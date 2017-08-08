@@ -1,3 +1,5 @@
+### [[ Default Unity .gitignore ]]
+
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -32,3 +34,9 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+
+### [[ Megaman Y+1 specific .gitignore ]]
+
+[Pp]rivate/*
+![Pp]rivate/.gitkeep
+
