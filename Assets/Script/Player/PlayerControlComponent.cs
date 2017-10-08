@@ -10,14 +10,12 @@ public abstract class PlayerControlComponent : MonoBehaviour {
     protected virtual void Awake() {
         controller = GetComponent<PlayerController>();
     }
-    
+
+    protected virtual void Start() { }
+
     protected Entity Entity { get { return controller.Entity; } }
     protected EntityState State { get { return controller.Entity.State; } }
-
-
-    protected abstract void Start();
-
+    
     public abstract void ControllerUpdate();
-    public abstract void UpdateVelocity(ref Vector2 velocity);
-    public abstract void UpdatePosition(ref Vector2 position);
+    public abstract void UpdatePlayer(ref Vector2 velocity, ref Vector2 position);
 }

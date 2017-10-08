@@ -11,9 +11,9 @@ public class PlayerController : MonoBehaviour {
     private static PlayerController instance = null;
     public static PlayerController Instance { get { return instance; } }
 
-    public string[] componentNames;
-
-    private bool active;
+    [SerializeField] private bool active;
+    [SerializeField] private string[] componentNames;
+    
     private Entity entity;
     private Rigidbody2D body;
     private Vector2 velocity;
@@ -50,13 +50,14 @@ public class PlayerController : MonoBehaviour {
         this.velocity = body.velocity;
 
         foreach (PlayerControlComponent component in components) {
-            if (component.enabled) {
+            if ((component != null) && component.enabled) {
                 component.ControllerUpdate();
-                component.UpdatePosition(ref position);
-                component.UpdateVelocity(ref position);
+                component.UpdatePlayer(
+                    ref velocity,
+                    ref position);
             }
         }
-
+        
         body.position = this.position;
         body.velocity = this.velocity;
     }
@@ -78,13 +79,15 @@ public class PlayerController : MonoBehaviour {
         components = new PlayerControlComponent[componentNames.Length];
         int i = 0;
         foreach (string componentName in componentNames) {
-            PlayerControlComponent component = GetComponent(componentName) as PlayerControlComponent;
-            if (component == null) {
-                Debug.LogErrorFormat(
-                    "Player control component type does not exist: {0}",
-                    componentName);
-            } else {
-                components[i++] = component;
+            if (componentName.Length > 0) {
+                PlayerControlComponent component = GetComponent(componentName) as PlayerControlComponent;
+                if (component == null) {
+                    Debug.LogErrorFormat(
+                        "Player control component type does not exist: {0}",
+                        componentName);
+                } else {
+                    components[i++] = component;
+                }
             }
         }
     }

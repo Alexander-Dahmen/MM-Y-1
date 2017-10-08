@@ -1,22 +1,29 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class ScreenScroller : MonoBehaviour {
 
-#region Delegates and Events
-    public delegate void ScreenScrollDelegate(TransformPair pivots);
+    #region Delegates and Events
+    public delegate void GlobalScreenScrollDelegate(ScreenScroller scroller, TransformPair pivots);
+    public delegate void LocalScreenScrollDelegate(TransformPair pivots);
 
-    public static event ScreenScrollDelegate OnScrollStart;
-    public static event ScreenScrollDelegate OnScrollFinish;
-#endregion
+    public static event GlobalScreenScrollDelegate GlobalScrollStart;
+    public static event GlobalScreenScrollDelegate GlobalScrollFinish;
+    public event LocalScreenScrollDelegate OnScrollStart;
+    public event LocalScreenScrollDelegate OnScrollFinish;
+    #endregion
 
-#region Constants
+    #region Constants
     private static readonly Vector2 NORMALIZED_MOVE_DISTANCE = new Vector2(3f, 3f);
-    private static readonly List<GameObject> activeObjects = new List<GameObject>();
-#endregion
+    #endregion
 
-#region Static
+    #region Static
+    private static readonly List<Func<bool>> scrollConditions = new List<Func<bool>>();
+    public static void AddScrollCondition(Func<bool> condition) { scrollConditions.Add(condition); }
+    public static void RemoveScrollCondition(Func<bool> condition) { scrollConditions.Remove(condition); }
+
     private static ScreenScroller currentScroller = null;
     private static float Sign(float f) { return (f > 0f) ? +1f : ((f < 0f) ? -1f : 0f); }
     #endregion
@@ -29,15 +36,16 @@ public class ScreenScroller : MonoBehaviour {
     [SerializeField] private bool normalize;
     [SerializeField] private float customScrollSpeed;
 
-    [SerializeField] private List<GameObject> enableObjects;
-    [SerializeField] private List<GameObject> disableObjects;
-
     private GameTime time;
     private CameraController cameraController;
     private CameraScrollController scrollController;
+
+    private GameObject oldRoomPivot;
+    private GameObject newRoomPivot;
+
     #endregion
 
-#region Unity Methods
+    #region Unity Methods
     void Awake() {
         cameraController = Camera.main.GetComponent<CameraController>();
         scrollController = Camera.main.GetComponent<CameraScrollController>();
@@ -67,9 +75,9 @@ public class ScreenScroller : MonoBehaviour {
             return;
         Scroll(player);
     }
-#endregion
+    #endregion
 
-#region Public Methods
+    #region Public Methods
     public Coroutine Scroll() {
         PlayerScrollController player = PlayerController.Instance.GetComponent<PlayerScrollController>();
         if (player == null) {
@@ -81,16 +89,32 @@ public class ScreenScroller : MonoBehaviour {
     }
 
     public Coroutine Scroll(PlayerScrollController player) {
-        //TODO Check if player is alive before scroll
+        if (!CheckScrollConditions())
+            return null;
 
         if (currentScroller == this)
             return null;
-        
+
+        oldRoomPivot = cameraController.Pivots.Left.gameObject;
+        newRoomPivot = pivots.Left.gameObject;
+
         return StartCoroutine(ScrollRoutine(player));
     }
-#endregion
+    #endregion
 
-#region Scrolling Routine
+    #region Private Methods
+    private bool CheckScrollConditions() {
+        foreach (Func<bool> condition in scrollConditions) {
+            if (condition == null)
+                throw new NullReferenceException("Null scroll condition Func<bool>");
+            if (!condition())
+                return false;
+        }
+        return true;
+    }
+    #endregion
+
+    #region Scrolling Routine
     private IEnumerator ScrollRoutine(PlayerScrollController player) {
         BeforeScroll(player);
 
@@ -102,10 +126,13 @@ public class ScreenScroller : MonoBehaviour {
     }
 
     private void BeforeScroll(PlayerScrollController player) {
+        newRoomPivot.SetActive(true);
         scrollController.ScreenScroll(pivots);
         player.SetScroll(move);
         time.TimeScale = 0f;
 
+        if (GlobalScrollStart != null)
+            GlobalScrollStart(this, pivots);
         if (OnScrollStart != null)
             OnScrollStart(pivots);
     }
@@ -115,21 +142,15 @@ public class ScreenScroller : MonoBehaviour {
     }
 
     private void AfterScroll(PlayerScrollController player) {
+        oldRoomPivot.SetActive(false);
         time.TimeScale = 1f;
         player.ClearScroll();
 
+        if (GlobalScrollFinish != null)
+            GlobalScrollFinish(this, pivots);
         if (OnScrollFinish != null)
             OnScrollFinish(pivots);
     }
-
-    private void SetPivotsActive() {
-        GameObject oldPivot = cameraController.Pivots.Left.gameObject;
-        GameObject newPivot = pivots.Left.gameObject;
-
-        //TODO Check if pivots need to be added to activate/deactivate objects
-
-        oldPivot.SetActive(false);
-        newPivot.SetActive(true);
-    }
-#endregion
+    
+    #endregion
 }

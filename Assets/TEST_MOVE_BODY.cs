@@ -12,9 +12,7 @@ public class TEST_MOVE_BODY : PlayerControlComponent {
 
     public override void ControllerUpdate() { }
 
-    public override void UpdateVelocity(ref Vector2 velocity) { }
-
-    public override void UpdatePosition(ref Vector2 position) {
+    public override void UpdatePlayer(ref Vector2 velocity, ref Vector2 position) {
         position +=
             new Vector2(Axis(KeyCode.A, KeyCode.D), Axis(KeyCode.S, KeyCode.W)) *
             speed *

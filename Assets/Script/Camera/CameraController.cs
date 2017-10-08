@@ -8,16 +8,20 @@ using UnityEditor;
 [RequireComponent(typeof(Camera))]
 public class CameraController : MonoBehaviour {
 
+    #region Delegates and Events
     public delegate void CameraControllerActiveDelegate();
 
     public static event CameraControllerActiveDelegate OnActivate;
     public static event CameraControllerActiveDelegate OnDeactivate;
+    #endregion
 
+    #region Singleton Instance
     private static CameraController instance = null;
     public static CameraController Instance { get { return instance; } }
+    #endregion
 
-    public Transform target;
-
+    #region Variables
+    [SerializeField] private Transform target;
     [SerializeField] private TransformPair pivots;
 
     private Camera cam;
@@ -25,8 +29,9 @@ public class CameraController : MonoBehaviour {
     private bool active;
     private Map<string, Vector2> offsets;
     private Vector3Pair anchors;
+    #endregion
 
-
+    #region Unity Methods
     void Awake() {
         if (instance == null)
             instance = this;
@@ -58,7 +63,9 @@ public class CameraController : MonoBehaviour {
 
         transform.position = new Vector3(position.x, position.y, zDist);
     }
+    #endregion
 
+    #region Properties
     public bool Active {
         get { return active; }
         set {
@@ -78,6 +85,11 @@ public class CameraController : MonoBehaviour {
     public Vector3 LowerRightCorner { get { return cam.ViewportToWorldPoint(new Vector3(1, 0, zDist)); } }
     public Vector3 UpperRightCorner { get { return cam.ViewportToWorldPoint(new Vector3(1, 1, zDist)); } }
     
+    public Transform Target {
+        get { return target; }
+        set { target = value; }
+    }
+
     public TransformPair Pivots {
         get { return pivots; }
         set {
@@ -87,7 +99,9 @@ public class CameraController : MonoBehaviour {
     }
 
     public float ZDist { get { return zDist; } }
+    #endregion
 
+    #region Public Methods
     public void SetPivots(Transform left, Transform right) {
         Pivots = new TransformPair(left, right);
     }
@@ -114,7 +128,9 @@ public class CameraController : MonoBehaviour {
             return anchors.Left + r * m;
         }
     }
+    #endregion
 
+    #region Private Methods
     private void UpdateAnchors() {
         Vector3 upLeftDelta = transform.position - UpperLeftCorner;
         Vector3 upRightDelta = transform.position - UpperRightCorner;
@@ -144,6 +160,7 @@ public class CameraController : MonoBehaviour {
 			Gizmos.DrawLine (transform.position, target.position);
 	}
 #endif
+    #endregion
 }
 
 #if UNITY_EDITOR

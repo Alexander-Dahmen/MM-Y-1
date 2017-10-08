@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 public class Map<K, V> : Dictionary<K, V> {
 
@@ -28,4 +29,8 @@ public class Map<K, V> : Dictionary<K, V> {
     public void Put(K key, V value) {
         this[key] = value;
     }
+
+	public override string ToString() {
+		return "{" + string.Join(",", this.Select(kv => kv.Key + "=" + kv.Value).ToArray()) + "}";
+	}
 }
